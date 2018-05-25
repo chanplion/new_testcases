@@ -1,0 +1,98 @@
+# The include statement below is a temp one for tests that are yet to
+#be ported to run with SequoiaDB.
+# (#Case #13070: Check Common Table With insert/update/delete/query)
+# (#Case #13071: Check Sharding Table With insert/update/delete/query)
+# (#Case #13072: Check MainCL Table With insert/update/delete/query)
+
+--source suite/sequoiadb_query/include/have_sequoiadb.inc
+
+--disable_warnings
+drop table if exists t1;
+--enable_warnings
+
+#
+# Check invalid comment when creating table
+# 
+--error 1030
+create table t1 (a varchar(255)) comment = "{table_options: {ABC : 1}}";
+--error 1030
+create table t1 (a varchar(255)) comment = "{table_options: {ShardingKey: 1}}";
+
+# Initialize
+--disable_warnings
+drop table if exists table_common_t1, table_hash_t2, table_range_t3;
+--enable_warnings
+
+#
+# create common table 
+#
+create table table_common_t1(a int, b varchar(255));
+show create table table_common_t1;
+# insert datas in common table
+insert into table_common_t1 values (1,'a'),(2,'a '),(3,'aaaaaaa'),(4,'aaaaaaaaaaaaaaaa');
+# select and check result
+select * from table_common_t1;
+# update
+update table_common_t1 set a = -99, b = 'update' where a > 3 and b <> 'a';
+# select and check result after updating
+select * from table_common_t1;
+# delete 
+delete from table_common_t1 where a > 3;
+# select and check result after deleting
+select * from table_common_t1;
+
+#
+# create hash table
+#
+create table table_hash_t2 (a float, b varchar(255)) comment = "{table_options: {ShardingKey:{a:1,b:-1},ShardingType:\"hash\"}}";
+show create table table_hash_t2;
+#insert datas in hash table
+insert into table_hash_t2 values (1,'a'),(2,'a '),(3,'a  '),(4,'bbbbbbb'),(5,'bbbbbbbbbbbbbbbbbbb');
+# select and check result
+select * from table_hash_t2;
+# update
+update table_hash_t2 set a = -11, b = 'update' where a > 4 or b = 'ab';
+# select and check result after updating
+select * from table_hash_t2;
+# delete 
+delete from table_hash_t2 where a > 3;
+# select and check result after deleting
+select * from table_hash_t2;
+
+#
+# create range table
+#  
+create table table_range_t3 (a int, b varchar(255)) comment = "{table_options: {ShardingKey:{a:1,b:-1},ShardingType:\"range\"}}";
+show create table table_range_t3;
+#insert datas in range table
+insert into table_range_t3 values (1,'a'),(2,'a '),(3,'a  '),(4,'ccccccccc'),(5,'ccccccccccccccccccccc');
+# select and check result
+select * from table_range_t3;
+# update
+update table_range_t3 set a = -11, b = 'update' where a > 3 or b = 'ab';
+# select and check result after updating
+select * from table_range_t3;
+# delete 
+delete from table_range_t3 where a > 3;
+# select and check result after deleting
+select * from table_range_t3;
+
+#
+# create maincl/subcl table 
+#
+create table table_maincl_t4 (a varchar(255)) comment = "{table_options: {ShardingKey:{a:1,b:-1},IsMainCL:true}}";
+show create table table_maincl_t4;
+#insert datas in maincl table
+insert into table_maincl_t4 values (1,'a'),(2,'a '),(3,'a  '),(4,'dddddddddd'),(5,'ddddddddddddddddddddddddddd');
+# select and check result
+select * from table_maincl_t4;
+# update
+update table_maincl_t4 set a = -11, b = 'update' where a > 3 or b = 'ab';
+# select and check result after updating
+select * from table_maincl_t4;
+# delete 
+delete from table_maincl_t4 where a > 3;
+# select and check result after deleting
+select * from table_maincl_t4;
+
+--source suite/sequoiadb_create/include/uninstall_sequoiadb.inc
